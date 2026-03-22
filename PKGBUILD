@@ -1,5 +1,5 @@
 pkgname=nodejs-lts-iron
-pkgver=25.0.0
+pkgver=20.20.1
 pkgrel=1
 pkgdesc="Evented I/O for V8 javascript (LTS release: Iron)"
 arch=('x86_64')
@@ -15,22 +15,32 @@ depends=(
     'zlib'
 )
 makedepends=(
-    'git'
     'python'
     'procps-ng'
 )
+provides=("nodejs=${pkgver}")
 conflicts=('nodejs')
 options=('!lto')
-source=(git+ssh://git@github.com/nodejs/node.git#tag=v${pkgver})
-sha256sums=(83757831f81da8011b6c732a8f61bc23f2ec4d5d41cc6caf149c91f5799a4130)
+source=(https://nodejs.org/dist/v${pkgver}/node-v${pkgver}.tar.xz
+    update-icu-tests.patch)
+sha256sums=(e540efdd6750f838e867daf9ab9d90ea195423f915613d05d87105f4d2ecd186
+    43da0fb7469e34a239b2711876475f303a4012151e44f72e636a5a7fcf21bff8)
+
+prepare() {
+    cd node-v${pkgver}
+
+    # Update ICU tests https://github.com/nodejs/node/pull/60523
+    patch -Np1 -i ${srcdir}/update-icu-tests.patch
+}
 
 build() {
-    cd node
+    cd node-v${pkgver}
 
     local configure_args=(
         --prefix=/usr
         --libdir=/usr/lib64
         --with-intl=system-icu
+        --without-corepack
         --without-npm
         --shared-openssl
         --shared-zlib
@@ -54,7 +64,7 @@ build() {
 }
 
 package() {
-    cd node
+    cd node-v${pkgver}
 
     make DESTDIR=${pkgdir} install
 }
